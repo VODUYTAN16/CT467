@@ -10,6 +10,7 @@ import usageRoutes from './app/routes/usage.routes.js';
 import paymentRoutes from './app/routes/payments.routes.js';
 import reportRoutes from './app/routes/reports.routes.js';
 import authRoutes from './app/routes/auth.routes.js';
+import userRoutes from './app/routes/users.routes.js';
 
 import errorHandler from './app/middleware/errorHandler.js';
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
