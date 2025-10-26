@@ -2,6 +2,20 @@
 CREATE DATABASE IF NOT EXISTS gym_mgmt CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE gym_mgmt;
 
+CREATE TABLE users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password VARCHAR(100) NOT NULL,
+  role ENUM('admin','staff') DEFAULT 'staff',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Thêm tài khoản mẫu
+INSERT INTO users (username, password, role) VALUES
+('admin', '123456', 'admin'),
+('nhanvien1', '123456', 'staff');
+
+
 -- 1. Tables
 CREATE TABLE packages (
   package_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -182,24 +196,24 @@ GROUP BY p.name, ym
 ORDER BY ym DESC, total_revenue DESC;
 
 -- 6. Seed dữ liệu tối thiểu (tùy ý)
-INSERT INTO packages(name, duration_months, price, description, sessions_per_week)
-VALUES
-('Cơ bản', 1, 500000, 'Gói 1 tháng', 3),
-('Nâng cao', 3, 1300000, 'Gói 3 tháng', 4),
-('VIP', 12, 4500000, 'Gói 12 tháng', 6);
+-- INSERT INTO packages(name, duration_months, price, description, sessions_per_week)
+-- VALUES
+-- ('Cơ bản', 1, 500000, 'Gói 1 tháng', 3),
+-- ('Nâng cao', 3, 1300000, 'Gói 3 tháng', 4),
+-- ('VIP', 12, 4500000, 'Gói 12 tháng', 6);
 
-INSERT INTO members(full_name, dob, gender, phone, address)
-VALUES
-('Nguyễn Văn A','1995-05-12','Nam','0900000001','Hà Nội'),
-('Trần Thị B','1997-09-20','Nữ','0900000002','Đà Nẵng');
+-- INSERT INTO members(full_name, dob, gender, phone, address)
+-- VALUES
+-- ('Nguyễn Văn A','1995-05-12','Nam','0900000001','Hà Nội'),
+-- ('Trần Thị B','1997-09-20','Nữ','0900000002','Đà Nẵng');
 
-INSERT INTO equipment(name, type, status) VALUES
-('Treadmill LifeFitness', 'Cardio', 'Hoạt động'),
-('Dumbbell 10kg', 'Free weight', 'Hoạt động');
+-- INSERT INTO equipment(name, type, status) VALUES
+-- ('Treadmill LifeFitness', 'Cardio', 'Hoạt động'),
+-- ('Dumbbell 10kg', 'Free weight', 'Hoạt động');
 
--- Hội viên A mua gói Cơ bản từ hôm nay
-INSERT INTO subscriptions(member_id, package_id, start_date, end_date, status)
-VALUES (1, 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 MONTH), 'Đang hoạt động');
+-- -- Hội viên A mua gói Cơ bản từ hôm nay
+-- INSERT INTO subscriptions(member_id, package_id, start_date, end_date, status)
+-- VALUES (1, 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 MONTH), 'Đang hoạt động');
 
 -- Payment để kích hoạt trigger gia hạn (ví dụ thanh toán gia hạn tiếp 1 tháng)
 -- INSERT INTO payments(subscription_id, amount, note) VALUES (1, 500000, 'Gia hạn 1 tháng');

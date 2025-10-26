@@ -38,6 +38,7 @@ export async function create(req, res, next) {
   try {
     const { name, duration_months, price, description, sessions_per_week } =
       req.body;
+    console.log(req.body);
     const [rs] = await pool.query(
       `INSERT INTO packages(name, duration_months, price, description, sessions_per_week)
        VALUES(:name, :duration_months, :price, :description, :sessions_per_week)`,

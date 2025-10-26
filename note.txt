@@ -1,1 +1,154 @@
- 
+====================================
+HỆ THỐNG QUẢN LÝ PHÒNG GYM (API)
+------------------------------------
+Công nghệ sử dụng:
+- Node.js + Express.js
+- MySQL (MySQL Workbench)
+- Thư viện: express, mysql2, dotenv, morgan, cors
+- Cấu trúc thư mục: app/config, app/controllers, app/routes, app/middleware
+
+Chức năng chính:
+1. Quản lý hội viên
+2. Quản lý gói tập
+3. Đăng ký gói và gia hạn tự động khi thanh toán
+4. Quản lý thiết bị
+5. Ghi nhận sử dụng thiết bị
+6. Quản lý thanh toán
+7. Thống kê và báo cáo
+
+Cổng mặc định: http://localhost:3000
+
+====================================
+I. API HỘI VIÊN (Members)
+Đường dẫn gốc: /api/members
+
+1. GET /api/members  
+   → Lấy danh sách tất cả hội viên.
+
+2. POST /api/members  
+   → Thêm hội viên mới.  
+   Body: { full_name, dob, gender, phone, address }
+
+3. GET /api/members/:id/expiring7  
+   → Kiểm tra hội viên có sắp hết hạn trong 7 ngày (dùng Function SQL).
+
+------------------------------------
+II. API GÓI TẬP (Packages)
+Đường dẫn gốc: /api/packages
+
+1. GET /api/packages  
+   → Lấy danh sách gói tập (có thể tìm kiếm bằng ?q=).
+
+2. GET /api/packages/:id  
+   → Xem chi tiết 1 gói tập.
+
+3. POST /api/packages  
+   → Tạo mới gói tập.  
+   Body: { name, duration_months, price, description, sessions_per_week }
+
+4. PUT /api/packages/:id  
+   → Cập nhật thông tin gói tập.
+
+5. DELETE /api/packages/:id  
+   → Xóa gói tập.
+
+------------------------------------
+III. API ĐĂNG KÝ GÓI TẬP (Subscriptions)
+Đường dẫn gốc: /api/subscriptions
+
+1. POST /api/subscriptions  
+   → Tạo đăng ký gói cho hội viên.  
+   Body: { member_id, package_id, start_date }
+
+2. POST /api/subscriptions/pay  
+   → Ghi nhận thanh toán; Trigger SQL tự động gia hạn gói tập.  
+   Body: { subscription_id, amount, note }
+
+------------------------------------
+IV. API THIẾT BỊ (Equipment)
+Đường dẫn gốc: /api/equipment
+
+1. GET /api/equipment  
+   → Lấy danh sách thiết bị (có thể lọc theo ?status=Hoạt%20động).
+
+2. GET /api/equipment/:id  
+   → Xem chi tiết thiết bị.
+
+3. POST /api/equipment  
+   → Thêm thiết bị mới.  
+   Body: { name, type, status }
+
+4. PUT /api/equipment/:id  
+   → Cập nhật thông tin thiết bị.
+
+5. PATCH /api/equipment/:id/status  
+   → Cập nhật nhanh trạng thái thiết bị.  
+   Body: { status }
+
+6. DELETE /api/equipment/:id  
+   → Xóa thiết bị.
+
+------------------------------------
+V. API SỬ DỤNG THIẾT BỊ (Equipment Usage)
+Đường dẫn gốc: /api/usages
+
+1. POST /api/usages  
+   → Ghi nhận việc sử dụng thiết bị.  
+   Body: { member_id, equipment_id, use_date, start_time, end_time }
+
+2. GET /api/usages  
+   → Lấy danh sách sử dụng (lọc theo ?member_id, ?equipment_id, ?date).
+
+3. GET /api/usages/:id  
+   → Xem chi tiết 1 lượt sử dụng.
+
+4. GET /api/usages/member/:memberId  
+   → Lấy tất cả lượt sử dụng của 1 hội viên.
+
+5. GET /api/usages/equipment/:equipmentId  
+   → Lấy tất cả lượt sử dụng của 1 thiết bị.
+
+6. DELETE /api/usages/:id  
+   → Xóa bản ghi sử dụng.
+
+------------------------------------
+VI. API THANH TOÁN (Payments)
+Đường dẫn gốc: /api/payments
+
+1. POST /api/payments  
+   → Ghi nhận thanh toán (kích hoạt Trigger gia hạn).  
+   Body: { subscription_id, amount, note }
+
+2. GET /api/payments  
+   → Lấy danh sách thanh toán (lọc theo ?from=&to=).
+
+3. GET /api/payments/:id  
+   → Xem chi tiết 1 thanh toán.
+
+4. GET /api/payments/subscription/:subscriptionId  
+   → Xem tất cả thanh toán của 1 đăng ký.
+
+5. DELETE /api/payments/:id  
+   → Xóa thanh toán.
+
+------------------------------------
+VII. API THỐNG KÊ – BÁO CÁO (Reports)
+Đường dẫn gốc: /api/reports
+
+1. GET /api/reports/equipment/top?limit=N  
+   → Thống kê thiết bị được sử dụng nhiều nhất.
+
+2. GET /api/reports/revenue/packages  
+   → Thống kê doanh thu theo gói tập.
+
+3. GET /api/reports/members/expiring?days=7  
+   → Danh sách hội viên sắp hết hạn (dùng Stored Procedure).
+
+====================================
+VIII. THÀNH PHẦN SQL ĐÃ CÓ
+- FUNCTION fn_is_member_expiring_7(): kiểm tra hội viên sắp hết hạn trong 7 ngày.
+- TRIGGER trg_extend_subscription_after_payment: tự động gia hạn khi thanh toán.
+- PROCEDURE sp_members_expiring_soon(days): trả danh sách hội viên sắp hết hạn.
+- Truy vấn thống kê: doanh thu theo gói tập, thiết bị sử dụng nhiều nhất.
+
+====================================
