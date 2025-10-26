@@ -152,3 +152,32 @@ VIII. THÀNH PHẦN SQL ĐÃ CÓ
 - Truy vấn thống kê: doanh thu theo gói tập, thiết bị sử dụng nhiều nhất.
 
 ====================================
+
+
+------------------------------------
+IX. XÁC THỰC & PHÂN QUYỀN (AUTH)
+Đường dẫn gốc: /api/auth
+
+1. POST /api/auth/login  
+   → Đăng nhập tài khoản quản trị hoặc nhân viên.  
+   Body: { username, password }  
+   Trả về: token (JWT), role ("admin" hoặc "staff").
+
+2. GET /api/auth/profile  
+   → Xem thông tin tài khoản hiện tại từ token.  
+   Header: Authorization: Bearer <token>
+
+------------------------------------
+X. QUẢN LÝ TÀI KHOẢN NHÂN VIÊN (Admin Only)
+Đường dẫn gốc: /api/users
+
+1. GET /api/users  
+   → Xem danh sách tài khoản (chỉ admin).
+
+2. POST /api/users  
+   → Tạo tài khoản nhân viên mới (chỉ admin).  
+   Body: { username, password, role }
+
+3. DELETE /api/users/:id  
+   → Xóa tài khoản nhân viên (chỉ admin).
+
