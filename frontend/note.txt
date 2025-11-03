@@ -1,0 +1,61 @@
+├── src/
+│   ├── api/                         # Kết nối backend API
+│   │   └── axiosClient.js           # Cấu hình axios (baseURL, token JWT)
+│   │
+│   ├── components/                  # Thành phần tái sử dụng UI
+│   │   ├── Navbar.jsx               # Thanh điều hướng trên
+│   │   ├── Sidebar.jsx              # Thanh menu bên trái (nếu có)
+│   │   ├── ProtectedRoute.jsx       # Bảo vệ route (chỉ đăng nhập mới vào được)
+│   │   ├── ThemeToggle.jsx          # Nút đổi sáng/tối
+│   │   └── LanguageSwitcher.jsx     # Nút đổi ngôn ngữ 
+│   │
+│   ├── contexts/                    # Context quản lý trạng thái toàn cục
+│   │   ├── AuthContext.jsx          # Xác thực người dùng (login, logout, token)
+│   │   ├── ThemeContext.jsx         # Quản lý theme sáng/tối
+│   │   └── LanguageContext.jsx      # Quản lý ngôn ngữ (i18n)
+│   │
+│   ├── hooks/                       # Custom hook tiện ích
+│   │   ├── useCurrency.js           # Định dạng tiền Việt Nam
+│   │   └── useDateFormat.js         # Định dạng ngày tháng Việt Nam
+│   │
+│   ├── i18n/                        # Cấu hình đa ngôn ngữ
+│   │   ├── index.js                 # Cấu hình i18next
+│   │   └── locales/
+│   │       ├── en/translation.json  # Ngôn ngữ tiếng Anh
+│   │       └── vi/translation.json  # Ngôn ngữ tiếng Việt
+│   │
+│   ├── layouts/                     # Bố cục chính của trang
+│   │   ├── MainLayout.jsx           # Giao diện sau khi đăng nhập (Navbar + Sidebar)
+│   │   └── AuthLayout.jsx           # Giao diện trang đăng nhập
+│   │
+│   ├── pages/                       # Các trang chính
+│   │   ├── Login.jsx                # Trang đăng nhập
+│   │   ├── Dashboard.jsx            # Trang tổng quan (thống kê nhanh)
+│   │   ├── Members/                 # Quản lý hội viên
+│   │   │   ├── MemberList.jsx       # Danh sách hội viên
+│   │   │   └── MemberForm.jsx       # Thêm / sửa hội viên
+│   │   ├── Packages/                # Quản lý gói tập
+│   │   │   ├── PackageList.jsx
+│   │   │   └── PackageForm.jsx
+│   │   ├── Subscriptions/           # Quản lý đăng ký gói
+│   │   │   ├── SubscriptionList.jsx
+│   │   │   └── SubscriptionForm.jsx
+│   │   ├── Equipment/               # Quản lý thiết bị
+│   │   │   ├── EquipmentList.jsx
+│   │   │   └── EquipmentForm.jsx
+│   │   ├── Usages/                  # Theo dõi sử dụng thiết bị
+│   │   │   └── UsageList.jsx
+│   │   ├── Payments/                # Thanh toán
+│   │   │   ├── PaymentList.jsx
+│   │   │   └── PaymentForm.jsx
+│   │   └── Reports/                 # Báo cáo thống kê
+│   │       └── ReportPage.jsx
+│   │
+│   ├── theme/                       # Cấu hình màu sắc / typography
+│   │   ├── palette.js               # Bảng màu chủ đạo (primary, secondary,...)
+│   │   └── typography.js            # Font chữ, cỡ chữ
+│   │
+│   ├── utils/                       # Hàm tiện ích
+│   │   ├── formatCurrency.js        # Định dạng tiền (VND)
+│   │   ├── formatDate.js            # Định dạng ngày (dd/MM/yyyy)
+│   │   └── validators.js            # Validate dữ liệu (nếu cần)
