@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Box, Button, Container, Paper, Typography, IconButton, Tooltip, TextField, InputAdornment, useTheme, alpha, Snackbar, Alert } from "@mui/material";
+import { Box, Button, Container, Paper, Typography, IconButton, Tooltip, TextField, InputAdornment, useTheme, alpha, Snackbar, Alert, Chip } from "@mui/material";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, Subscriptions as SubscriptionsIcon } from "@mui/icons-material";
 import { DataGrid, gridClasses } from "@mui/x-data-grid";
 import { useTranslation } from "react-i18next";
@@ -60,10 +60,11 @@ const SubscriptionList = () => {
   };
 
   const filteredSubscriptions = subscriptions.filter((sub) => {
-    const memberName = sub.member ? sub.member.full_name : "";
-    const packageName = sub.package ? sub.package.name : "";
+    if (!sub) return false;
+    const memberName = sub.member?.full_name || "";
+    const packageName = sub.package?.name || "";
     const startDate = sub.start_date ? new Date(sub.start_date).toLocaleDateString() : "";
-    const endDate = getEndDate(sub.start_date, sub.package ? sub.package.duration : 0)?.toLocaleDateString() || "";
+    const endDate = getEndDate(sub.start_date, sub.package?.duration || 0)?.toLocaleDateString() || "";
 
     return [memberName, packageName, startDate, endDate].join(" ").toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -75,18 +76,20 @@ const SubscriptionList = () => {
       headerName: t("subscriptions.member") || "Member",
       flex: 1.5,
       minWidth: 150,
+      renderCell: (params) => params.row.member?.full_name || "N/A",
     },
     {
       field: "package_name",
       headerName: t("subscriptions.package") || "Package",
       flex: 1.5,
       minWidth: 150,
+      renderCell: (params) => params.row.package?.name || "N/A",
     },
     {
       field: "package_price",
       headerName: t("packages.price") || "Price",
       width: 120,
-      renderCell: (params) => formatCurrencyVND(params.value),
+      renderCell: (params) => formatCurrencyVND(params.row.package?.price || 0),
     },
     {
       field: "start_date",
@@ -123,10 +126,34 @@ const SubscriptionList = () => {
       headerName: t("subscriptions.status") || "Status",
       width: 140,
       renderCell: (params) => {
-        if (!params.row || !params.row.package_duration) return "N/A";
-        const endDate = getEndDate(params.row.start_date, params.row.package_duration);
+        const endDate = params.row.end_date ? new Date(params.row.end_date) : null;
         const isActive = endDate && new Date() < endDate;
-        return isActive ? t("subscription.active") : t("subscription.expired");
+        const statusText = isActive ? t("subscription.active") : t("subscription.expired");
+        return (
+          <Chip
+            label={statusText}
+            size="small"
+            color={isActive ? "success" : "default"}
+            variant="outlined"
+          />
+        );
+      },
+    },
+    {
+      field: "paid",
+      headerName: t("subscriptions.payment_status") || "Payment",
+      width: 140,
+      renderCell: (params) => {
+        const isPaid = params.value;
+        const label = isPaid ? t("subscription.paid") : t("subscription.unpaid");
+        return (
+          <Chip
+            label={label}
+            size="small"
+            color={isPaid ? "success" : "warning"}
+            variant="filled"
+          />
+        );
       },
     },
     {
@@ -182,7 +209,8 @@ const SubscriptionList = () => {
           </Typography>
         </Box>
         <Button variant="outlined" startIcon={<AddIcon />} onClick={() => navigate("/subscriptions/new")} sx={{ px: 3, py: 1 }}>
-          {t("subscriptions.add_new")}        </Button>
+          {t("subscriptions.add_new")}
+        </Button>
       </Box>
 
       {/* Main Content */}
@@ -234,6 +262,9 @@ const SubscriptionList = () => {
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
           autoHeight
+          getRowClassName={(params) =>
+            !params.row.paid ? `unpaid-row` : ""
+          }
           sx={{
             border: "none",
             "& .MuiDataGrid-cell": {
@@ -243,7 +274,13 @@ const SubscriptionList = () => {
               bgcolor: alpha(theme.palette.primary.main, 0.02),
               borderRadius: 1,
             },
-            "& .MuiDataGrid-row:nth-of-type(even)": {
+            "& .unpaid-row": {
+              bgcolor: alpha(theme.palette.warning.light, 0.15),
+              "&:hover": {
+                bgcolor: alpha(theme.palette.warning.light, 0.25),
+              },
+            },
+            "& .MuiDataGrid-row:nth-of-type(even):not(.unpaid-row)": {
               bgcolor: alpha(theme.palette.primary.main, 0.02),
             },
             [`& .${gridClasses.row}:hover`]: {

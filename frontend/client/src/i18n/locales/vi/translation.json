@@ -62,6 +62,7 @@
     "paid_at": "Ngày thanh toán",
     "note": "Ghi chú",
     "member_phone": "Số điện thoại thành viên",
+    "member_name": "Tên thành viên",
     "package_name": "Tên gói tập",
     "name": "Họ và tên",
     "id": "ID",
@@ -124,6 +125,10 @@
       "totalRevenue": "Tổng doanh thu",
       "noData": "Không có dữ liệu doanh thu theo gói tập."
     },
+    "totalRevenue": {
+      "title": "Tổng doanh thu",
+      "noData": "Không có dữ liệu tổng doanh thu."
+    },
     "membersExpiringSoon": {
       "title": "Thành viên sắp hết hạn",
       "memberName": "Tên thành viên",
@@ -179,6 +184,8 @@
     "active": "Đang hoạt động",
     "inactive": "Tạm dừng",
     "expired": "Hết hạn",
+    "paid": "Đã thanh toán",
+    "unpaid": "Chưa thanh toán",
     "confirm_delete": "Bạn có chắc muốn xóa đăng ký này không?"
   },
   "sidebar": {
@@ -263,6 +270,7 @@
     "start_date": "Ngày bắt đầu",
     "end_date": "Ngày kết thúc",
     "status": "Trạng thái",
+    "payment_status": "Trạng thái thanh toán",
     "edit_title": "Chỉnh sửa Đăng ký",
     "add_title": "Thêm Đăng ký",
     "form_description": "Điền thông tin chi tiết để thêm hoặc chỉnh sửa đăng ký.",

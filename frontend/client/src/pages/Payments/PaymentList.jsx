@@ -44,9 +44,23 @@ const PaymentList = () => {
 
   const columns = [
     { field: "id", headerName: t("form.id") || "ID", width: 90 },
-    { field: "member_name", headerName: t("form.member_name") || "Member Name", flex: 2, minWidth: 180 },
-    { field: "member_phone", headerName: t("form.member_phone") || "Member Phone", width: 140 },
-    { field: "package_name", headerName: t("form.package_name") || "Package Name", flex: 1, minWidth: 150 },
+    {
+      field: "member_name",
+      headerName: t("form.member_name") || "Member Name",
+      flex: 2,
+      minWidth: 180,
+    },
+    {
+      field: "member_phone",
+      headerName: t("form.member_phone") || "Member Phone",
+      width: 140,
+    },
+    {
+      field: "package_name",
+      headerName: t("form.package_name") || "Package Name",
+      flex: 1,
+      minWidth: 150,
+    },
     { field: "amount", headerName: t("form.amount") || "Amount", width: 120 },
     {
       field: "paid_at",

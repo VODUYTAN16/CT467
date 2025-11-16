@@ -75,6 +75,10 @@
       "totalRevenue": "Total Revenue",
       "noData": "No revenue by package data available."
     },
+    "totalRevenue": {
+      "title": "Total Revenue",
+      "noData": "No total revenue data available."
+    },
     "membersExpiringSoon": {
       "title": "Members Expiring Soon",
       "memberName": "Member Name",
@@ -95,6 +99,7 @@
     "paid_at": "Paid At",
     "note": "Note",
     "member_phone": "Member Phone",
+    "member_name": "Member Name",
     "package_name": "Package Name",
     "name": "Name",
     "id": "ID",
@@ -179,6 +184,8 @@
     "active": "Active",
     "inactive": "Inactive",
     "expired": "Expired",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
     "confirm_delete": "Are you sure you want to delete this subscription?"
   },
   "sidebar": {
@@ -268,6 +275,7 @@
     "start_date": "Start Date",
     "end_date": "End Date",
     "status": "Status",
+    "payment_status": "Payment Status",
     "edit_title": "Edit Subscription",
     "add_title": "Add Subscription",
     "form_description": "Fill in the details to add or edit a subscription.",
