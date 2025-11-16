@@ -4,6 +4,7 @@ import PageHeader from "../../components/common/PageHeader";
 import { useTranslation } from "react-i18next";
 import api from "../../api/api";
 import { motion } from "framer-motion";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const ReportPage = () => {
   const { t } = useTranslation();
@@ -140,6 +141,37 @@ const ReportPage = () => {
               </Paper>
             </Grid>
 
+            {/* Top Equipment Usage Chart */}
+            <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+              <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {t("reports.topEquipmentUsage.chartTitle")}
+                </Typography>
+                {topEquipment.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={topEquipment}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="usage_count" fill="#8884d8" name={t("reports.topEquipmentUsage.usageCount")} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Typography>{t("reports.topEquipmentUsage.noData")}</Typography>
+                )}
+              </Paper>
+            </Grid>
+
             {/* Revenue by Package */}
             <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
               <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
@@ -184,6 +216,40 @@ const ReportPage = () => {
                       </TableFooter>
                     </Table>
                   </TableContainer>
+                ) : (
+                  <Typography>{t("reports.revenueByPackage.noData")}</Typography>
+                )}
+              </Paper>
+            </Grid>
+
+            {/* Revenue by Package Chart */}
+            <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+              <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {t("reports.revenueByPackage.chartTitle")}
+                </Typography>
+                {revenueByPackage.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={revenueByPackage.map(item => ({
+                        ...item,
+                        name: `${item.package_name} (${item.ym})`
+                      }))}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value)} />
+                      <Legend />
+                      <Bar dataKey="total_revenue" fill="#82ca9d" name={t("reports.revenueByPackage.totalRevenue")} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 ) : (
                   <Typography>{t("reports.revenueByPackage.noData")}</Typography>
                 )}

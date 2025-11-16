@@ -66,14 +66,16 @@
       "title": "Top Equipment Usage",
       "equipmentName": "Equipment Name",
       "usageCount": "Usage Count",
-      "noData": "No top equipment usage data available."
+      "noData": "No top equipment usage data available.",
+      "chartTitle": "Top Equipment Usage Chart"
     },
     "revenueByPackage": {
       "title": "Revenue by Package (Monthly)",
       "packageName": "Package Name",
       "month": "Month",
       "totalRevenue": "Total Revenue",
-      "noData": "No revenue by package data available."
+      "noData": "No revenue by package data available.",
+      "chartTitle": "Revenue by Package Chart"
     },
     "totalRevenue": {
       "title": "Total Revenue",

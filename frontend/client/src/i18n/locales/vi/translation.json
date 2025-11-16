@@ -116,14 +116,16 @@
       "title": "Thiết bị được sử dụng nhiều nhất",
       "equipmentName": "Tên thiết bị",
       "usageCount": "Số lượt sử dụng",
-      "noData": "Không có dữ liệu sử dụng thiết bị hàng đầu."
+      "noData": "Không có dữ liệu sử dụng thiết bị hàng đầu.",
+      "chartTitle": "Biểu đồ sử dụng thiết bị hàng đầu"
     },
     "revenueByPackage": {
       "title": "Doanh thu theo gói tập (Hàng tháng)",
       "packageName": "Tên gói tập",
       "month": "Tháng",
       "totalRevenue": "Tổng doanh thu",
-      "noData": "Không có dữ liệu doanh thu theo gói tập."
+      "noData": "Không có dữ liệu doanh thu theo gói tập.",
+      "chartTitle": "Biểu đồ doanh thu theo gói tập"
     },
     "totalRevenue": {
       "title": "Tổng doanh thu",
