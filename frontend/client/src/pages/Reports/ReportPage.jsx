@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Container, Typography, Paper, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert, Button } from "@mui/material";
+import { Box, Container, Typography, Paper, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert, Button, TableFooter } from "@mui/material";
 import PageHeader from "../../components/common/PageHeader";
 import { useTranslation } from "react-i18next";
 import api from "../../api/api";
@@ -9,7 +9,6 @@ const ReportPage = () => {
   const { t } = useTranslation();
   const [topEquipment, setTopEquipment] = useState([]);
   const [revenueByPackage, setRevenueByPackage] = useState([]);
-  const [expiringMembers, setExpiringMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -63,14 +62,9 @@ const ReportPage = () => {
     const fetchReports = async () => {
       try {
         setLoading(true);
-        const [equipmentRes, revenueRes, membersRes] = await Promise.all([
-          api.get("/reports/equipment/top"),
-          api.get("/reports/revenue/packages"),
-          api.get("/reports/members/expiring"),
-        ]);
+        const [equipmentRes, revenueRes] = await Promise.all([api.get("/reports/equipment/top"), api.get("/reports/revenue/packages")]);
         setTopEquipment(equipmentRes.data);
         setRevenueByPackage(revenueRes.data);
-        setExpiringMembers(membersRes.data);
       } catch (err) {
         console.error("Error fetching reports:", err);
         setError(t("message.error_loading_reports"));
@@ -98,16 +92,14 @@ const ReportPage = () => {
     );
   }
 
+  const totalRevenue = revenueByPackage.reduce((sum, item) => sum + Number(item.total_revenue || 0), 0);
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <Box>
           <PageHeader title={t("reports.title")} />
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
             <Button variant="contained" onClick={handleExportPdf}>
               {t("reports.exportPdf")}
             </Button>
@@ -117,108 +109,88 @@ const ReportPage = () => {
           </Box>
 
           <Grid container spacing={3}>
-          {/* Top Equipment Usage */}
-          <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-            <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                {t("reports.topEquipmentUsage.title")}
-              </Typography>
-              {topEquipment.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{t("reports.topEquipmentUsage.equipmentName")}</TableCell>
-                        <TableCell align="right">{t("reports.topEquipmentUsage.usageCount")}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody component={motion.tbody} initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }}>
-                      {topEquipment.map((item, index) => (
-                        <TableRow key={item.equipment_id} component={motion.tr} variants={rowVariants} sx={{ "&:nth-of-type(odd)": { backgroundColor: "action.hover" } }}>
-                          <TableCell>{item.name}</TableCell>
-                          <TableCell align="right">{item.usage_count}</TableCell>
+            {/* Top Equipment Usage */}
+            <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+              <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {t("reports.topEquipmentUsage.title")}
+                </Typography>
+                {topEquipment.length > 0 ? (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{t("reports.topEquipmentUsage.equipmentName")}</TableCell>
+                          <TableCell align="right">{t("reports.topEquipmentUsage.usageCount")}</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Typography>{t("reports.topEquipmentUsage.noData")}</Typography>
-              )}
-            </Paper>
-          </Grid>
+                      </TableHead>
+                      <TableBody component={motion.tbody} initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }}>
+                        {topEquipment.map((item, index) => (
+                          <TableRow key={item.equipment_id} component={motion.tr} variants={rowVariants} sx={{ "&:nth-of-type(odd)": { backgroundColor: "action.hover" } }}>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell align="right">{item.usage_count}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography>{t("reports.topEquipmentUsage.noData")}</Typography>
+                )}
+              </Paper>
+            </Grid>
 
-          {/* Revenue by Package */}
-          <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-            <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                {t("reports.revenueByPackage.title")}
-              </Typography>
-              {revenueByPackage.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{t("reports.revenueByPackage.packageName")}</TableCell>
-                        <TableCell>{t("reports.revenueByPackage.month")}</TableCell>
-                        <TableCell align="right">{t("reports.revenueByPackage.totalRevenue")}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody component={motion.tbody} initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }}>
-                      {revenueByPackage.map((item, index) => (
-                        <TableRow key={index} component={motion.tr} variants={rowVariants} sx={{ "&:nth-of-type(odd)": { backgroundColor: "action.hover" } }}>
-                          <TableCell>{item.package_name}</TableCell>
-                          <TableCell>{item.ym}</TableCell>
-                          <TableCell align="right">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.total_revenue)}</TableCell>
+            {/* Revenue by Package */}
+            <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+              <Paper elevation={2} sx={{ p: 3, height: "100%", borderRadius: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {t("reports.revenueByPackage.title")}
+                </Typography>
+                {revenueByPackage.length > 0 ? (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>{t("reports.revenueByPackage.packageName")}</TableCell>
+                          <TableCell>{t("reports.revenueByPackage.month")}</TableCell>
+                          <TableCell align="right">{t("reports.revenueByPackage.totalRevenue")}</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Typography>{t("reports.revenueByPackage.noData")}</Typography>
-              )}
-            </Paper>
-          </Grid>
-
-          {/* Members Expiring Soon */}
-          <Grid item xs={12} component={motion.div} variants={itemVariants}>
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                {t("reports.membersExpiringSoon.title")}
-              </Typography>
-              {expiringMembers.length > 0 ? (
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{t("reports.membersExpiringSoon.memberName")}</TableCell>
-                        <TableCell>{t("reports.membersExpiringSoon.phoneNumber")}</TableCell>
-                        <TableCell>{t("reports.membersExpiringSoon.packageName")}</TableCell>
-                        <TableCell>{t("reports.membersExpiringSoon.endDate")}</TableCell>
-                        <TableCell>{t("reports.membersExpiringSoon.status")}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody component={motion.tbody} initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }}>
-                      {expiringMembers.map((item, index) => (
-                        <TableRow key={item.member_id} component={motion.tr} variants={rowVariants} sx={{ "&:nth-of-type(odd)": { backgroundColor: "action.hover" } }}>
-                          <TableCell>{item.full_name}</TableCell>
-                          <TableCell>{item.phone}</TableCell>
-                          <TableCell>{item.package_name}</TableCell>
-                          <TableCell>{item.end_date}</TableCell>
-                          <TableCell>{item.status}</TableCell>
+                      </TableHead>
+                      <TableBody component={motion.tbody} initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }}>
+                        {revenueByPackage.map((item, index) => (
+                          <TableRow key={index} component={motion.tr} variants={rowVariants} sx={{ "&:nth-of-type(odd)": { backgroundColor: "action.hover" } }}>
+                            <TableCell>{item.package_name}</TableCell>
+                            <TableCell>{item.ym}</TableCell>
+                            <TableCell align="right">{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(item.total_revenue || 0)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell colSpan={2} align="right">
+                            <Typography variant="subtitle1" fontWeight="bold">
+                              {t("reports.totalRevenue.title")}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="subtitle1" fontWeight="bold">
+                              {new Intl.NumberFormat("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                              }).format(totalRevenue)}
+                            </Typography>
+                          </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Typography>{t("reports.membersExpiringSoon.noData")}</Typography>
-              )}
-            </Paper>
+                      </TableFooter>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography>{t("reports.revenueByPackage.noData")}</Typography>
+                )}
+              </Paper>
+            </Grid>
           </Grid>
-        </Grid>
-      </Box>
+        </Box>
       </motion.div>
     </Container>
   );

@@ -279,6 +279,9 @@
     "edit_title": "Edit Subscription",
     "add_title": "Add Subscription",
     "form_description": "Fill in the details to add or edit a subscription.",
-    "duration": "Duration"
+    "duration": "Duration",
+    "expiring_subscriptions": "Expiring Subscriptions",
+    "days_left": "Days Left",
+    "days": "days"
   }
 }

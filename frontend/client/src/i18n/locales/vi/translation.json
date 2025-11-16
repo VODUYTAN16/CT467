@@ -274,6 +274,9 @@
     "edit_title": "Chỉnh sửa Đăng ký",
     "add_title": "Thêm Đăng ký",
     "form_description": "Điền thông tin chi tiết để thêm hoặc chỉnh sửa đăng ký.",
-    "duration": "Thời lượng"
+    "duration": "Thời lượng",
+    "expiring_subscriptions": "Đăng ký sắp hết hạn",
+    "days_left": "Số ngày còn lại",
+    "days": "ngày"
   }
 }
