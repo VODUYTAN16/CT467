@@ -4,7 +4,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as Searc
 import { DataGrid, gridClasses } from "@mui/x-data-grid";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import api from "../../api/api";
+import api, { getMembersExpiringSoon } from "../../api/api";
 import PageHeader from "../../components/common/PageHeader";
 import formatCurrencyVND from "../../utils/formatCurrency";
 
@@ -13,6 +13,7 @@ const SubscriptionList = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const [subscriptions, setSubscriptions] = useState([]);
+  const [expiringMembers, setExpiringMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [paginationModel, setPaginationModel] = useState({
@@ -25,7 +26,7 @@ const SubscriptionList = () => {
     try {
       const response = await api.get("/subscriptions");
       const mapped = (response.data || []).map((sub) => ({ id: sub.subscription_id, ...sub }));
-      console.log("Mapped subscriptions:", mapped);
+      console.log("First mapped subscription:", mapped[0]);
       setSubscriptions(mapped);
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
@@ -35,8 +36,18 @@ const SubscriptionList = () => {
     }
   };
 
+  const fetchExpiringMembers = async () => {
+    try {
+      const response = await getMembersExpiringSoon(7); // Fetch members expiring in 7 days
+      setExpiringMembers(response.data);
+    } catch (error) {
+      console.error("Error fetching expiring members:", error);
+    }
+  };
+
   useEffect(() => {
     fetchSubscriptions();
+    fetchExpiringMembers();
   }, []);
 
   const handleDelete = async (id) => {
@@ -86,24 +97,14 @@ const SubscriptionList = () => {
       renderCell: (params) => params.row.package?.name || "N/A",
     },
     {
-      field: "package_price",
-      headerName: t("packages.price") || "Price",
-      width: 120,
-      renderCell: (params) => formatCurrencyVND(params.row.package?.price || 0),
-    },
-    {
       field: "start_date",
       headerName: t("subscriptions.start_date") || "Start Date",
       width: 150,
       renderCell: (params) => {
         const v = params.value;
         if (!v) return "";
-        try {
-          const d = v instanceof Date ? v : new Date(v);
-          return d && !isNaN(d) ? d.toLocaleDateString() : String(v);
-        } catch {
-          return String(v);
-        }
+        const d = new Date(v);
+        return !isNaN(d) ? d.toLocaleDateString() : "";
       },
     },
     {
@@ -113,12 +114,8 @@ const SubscriptionList = () => {
       renderCell: (params) => {
         const v = params.value;
         if (!v) return "";
-        try {
-          const d = v instanceof Date ? v : new Date(v);
-          return d && !isNaN(d) ? d.toLocaleDateString() : String(v);
-        } catch {
-          return String(v);
-        }
+        const d = new Date(v);
+        return !isNaN(d) ? d.toLocaleDateString() : "";
       },
     },
     {
@@ -129,14 +126,7 @@ const SubscriptionList = () => {
         const endDate = params.row.end_date ? new Date(params.row.end_date) : null;
         const isActive = endDate && new Date() < endDate;
         const statusText = isActive ? t("subscription.active") : t("subscription.expired");
-        return (
-          <Chip
-            label={statusText}
-            size="small"
-            color={isActive ? "success" : "default"}
-            variant="outlined"
-          />
-        );
+        return <Chip label={statusText} size="small" color={isActive ? "success" : "default"} variant="outlined" />;
       },
     },
     {
@@ -146,14 +136,7 @@ const SubscriptionList = () => {
       renderCell: (params) => {
         const isPaid = params.value;
         const label = isPaid ? t("subscription.paid") : t("subscription.unpaid");
-        return (
-          <Chip
-            label={label}
-            size="small"
-            color={isPaid ? "success" : "warning"}
-            variant="filled"
-          />
-        );
+        return <Chip label={label} size="small" color={isPaid ? "success" : "warning"} variant="filled" />;
       },
     },
     {
@@ -213,6 +196,33 @@ const SubscriptionList = () => {
         </Button>
       </Box>
 
+      {/* Expiring Members Section */}
+      {expiringMembers.length > 0 && (
+        <Paper
+          elevation={2}
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 2,
+            backgroundColor: "background.paper",
+          }}
+        >
+          <Typography variant="h6" component="h2" fontWeight="500" mb={2}>
+            {t("subscriptions.expiring_subscriptions") || "Members Expiring in 7 Days"}
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {expiringMembers.map((member) => (
+              <Chip
+                key={member.member_id}
+                label={`${member.full_name} - ${member.phone} - ${member.package_name} (Expires: ${new Date(member.end_date).toLocaleDateString()})`}
+                color="warning"
+                variant="outlined"
+              />
+            ))}
+          </Box>
+        </Paper>
+      )}
+
       {/* Main Content */}
       <Paper
         elevation={2}
@@ -262,9 +272,7 @@ const SubscriptionList = () => {
           pageSizeOptions={[5, 10, 25]}
           disableRowSelectionOnClick
           autoHeight
-          getRowClassName={(params) =>
-            !params.row.paid ? `unpaid-row` : ""
-          }
+          getRowClassName={(params) => (!params.row.paid ? `unpaid-row` : "")}
           sx={{
             border: "none",
             "& .MuiDataGrid-cell": {
