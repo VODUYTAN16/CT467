@@ -50,6 +50,7 @@ CREATE TABLE subscriptions (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   status ENUM('Đang hoạt động','Hết hạn') NOT NULL DEFAULT 'Đang hoạt động',
+  paid BOOLEAN DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_sub_member FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE CASCADE,
@@ -129,35 +130,58 @@ DELIMITER ;
 --   - Ngược lại => cộng thêm duration_months từ end_date hiện tại
 --   - Cập nhật status = 'Đang hoạt động'
 DELIMITER $$
+
+DROP TRIGGER IF EXISTS trg_extend_subscription_after_payment$$
+
 CREATE TRIGGER trg_extend_subscription_after_payment
 AFTER INSERT ON payments
 FOR EACH ROW
 BEGIN
   DECLARE pkg_months INT;
   DECLARE curr_end DATE;
+  DECLARE pay_count INT;
 
-  SELECT p.duration_months, s.end_date
-    INTO pkg_months, curr_end
-  FROM subscriptions s
-  JOIN packages p ON p.package_id = s.package_id
-  WHERE s.subscription_id = NEW.subscription_id
-  FOR UPDATE;
+  -- 1) Kiểm tra xem subscription này đã từng thanh toán chưa
+  SELECT COUNT(*) INTO pay_count
+  FROM payments
+  WHERE subscription_id = NEW.subscription_id
+    AND payment_id <> NEW.payment_id;  -- tránh đếm chính payment vừa insert
 
-  IF curr_end < CURDATE() THEN
-    UPDATE subscriptions
-       SET start_date = CURDATE(),
-           end_date   = DATE_ADD(CURDATE(), INTERVAL pkg_months MONTH),
-           status     = 'Đang hoạt động',
-           updated_at = NOW()
-     WHERE subscription_id = NEW.subscription_id;
-  ELSE
-    UPDATE subscriptions
-       SET end_date   = DATE_ADD(curr_end, INTERVAL pkg_months MONTH),
-           status     = 'Đang hoạt động',
-           updated_at = NOW()
-     WHERE subscription_id = NEW.subscription_id;
+  -- 2) Luôn cập nhật paid = 1 cho subscription
+  UPDATE subscriptions
+     SET paid = 1,
+         updated_at = NOW()
+   WHERE subscription_id = NEW.subscription_id;
+
+  -- 3) Chỉ gia hạn nếu đã có thanh toán trước đó
+  IF pay_count > 0 THEN
+
+    -- Lấy số tháng của gói & end_date hiện tại
+    SELECT p.duration_months, s.end_date
+      INTO pkg_months, curr_end
+    FROM subscriptions s
+    JOIN packages p ON p.package_id = s.package_id
+    WHERE s.subscription_id = NEW.subscription_id
+    FOR UPDATE;
+
+    IF curr_end < CURDATE() THEN
+      UPDATE subscriptions
+         SET start_date = CURDATE(),
+             end_date   = DATE_ADD(CURDATE(), INTERVAL pkg_months MONTH),
+             status     = 'Đang hoạt động',
+             updated_at = NOW()
+       WHERE subscription_id = NEW.subscription_id;
+    ELSE
+      UPDATE subscriptions
+         SET end_date   = DATE_ADD(curr_end, INTERVAL pkg_months MONTH),
+             status     = 'Đang hoạt động',
+             updated_at = NOW()
+       WHERE subscription_id = NEW.subscription_id;
+    END IF;
+
   END IF;
 END$$
+
 DELIMITER ;
 
 -- 4. Stored Procedure: Danh sách hội viên sắp hết hạn (tham số ngày)
