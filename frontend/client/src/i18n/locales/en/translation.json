@@ -76,7 +76,7 @@
     "revenueByPackage": {
       "title": "Revenue by Package (Monthly)",
       "packageName": "Package Name",
-      "month": "Month",
+      "month": "Choose month",
       "totalRevenue": "Total Revenue",
       "noData": "No revenue by package data available.",
       "chartTitle": "Revenue by Package Chart"

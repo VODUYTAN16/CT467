@@ -68,7 +68,7 @@
     "member_phone": "Số điện thoại thành viên",
     "member_name": "Tên thành viên",
     "package_name": "Tên gói tập",
-    "name": "Họ và tên",
+    "name": "Tên",
     "id": "ID",
     "firstName": "Tên",
     "lastName": "Họ",
@@ -127,7 +127,7 @@
     "revenueByPackage": {
       "title": "Doanh thu theo gói tập (Hàng tháng)",
       "packageName": "Tên gói tập",
-      "month": "Tháng",
+      "month": "Chọn Tháng",
       "totalRevenue": "Tổng doanh thu",
       "noData": "Không có dữ liệu doanh thu theo gói tập.",
       "chartTitle": "Biểu đồ doanh thu theo gói tập"

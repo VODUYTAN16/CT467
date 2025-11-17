@@ -12,6 +12,9 @@ import {
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { isSubscriptionExpiringSoon } from './members.service.js';
+import { findAllSubscriptions } from './subscriptions.service.js';
+
 // Lấy __dirname cho ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -303,4 +306,20 @@ export async function exportWord(month = null) {
   });
 
   return Packer.toBuffer(doc);
+}
+
+export async function membersExpiringSoon(days = 7) {
+  const allSubscriptions = await findAllSubscriptions();
+  const expiringSubscriptions = allSubscriptions.filter(
+    (sub) => sub.end_date && isSubscriptionExpiringSoon(sub.end_date, days)
+  );
+
+  return expiringSubscriptions.map((sub) => ({
+    member_id: sub.member_id,
+    full_name: sub.member?.full_name || '',
+    phone: sub.member?.phone || '',
+    subscription_id: sub.subscription_id,
+    package_name: sub.package?.name || '',
+    end_date: sub.end_date,
+  }));
 }

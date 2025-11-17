@@ -1,0 +1,15 @@
+[33m07770cd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mui[m[33m, [m[1;31morigin/Backend_Frontend[m[33m, [m[1;32mBackend_Frontend[m[33m)[m :wq Merge branch 'ui' of https://github.com/VODUYTAN16/CT467 into ui
+[33m342beda[m report pdf, thongke
+[33m465a5bd[m[33m ([m[1;31morigin/ui[m[33m, [m[1;31morigin/Tuong[m[33m)[m hiệu chỉnh lại giao diện
+[33md430551[m hiệu chỉnh đăng ký
+[33mf7b7f4f[m cập nhật lại giao diện file PDF và Word
+[33m253eccf[m hiểu chỉnh trang report
+[33m0aceedc[m hiệu chỉnh giao diện phần subscription
+[33m65ee871[m hiệu chỉnh trang report
+[33mbb0c23e[m hiểu chỉnh lại giao diện trang payment
+[33m2e0dbaa[m change trigger and sql
+[33m05af002[m Cập nhật giao diện
+[33m663895f[m[33m ([m[1;31morigin/backend_gym[m[33m)[m note API
+[33m111d84d[m add functional users
+[33m52240eb[m add login function and users table
+[33mb9dc55c[m first commit

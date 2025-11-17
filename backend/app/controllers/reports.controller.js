@@ -1,5 +1,7 @@
 import * as service from '../services/reports.service.js';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { generatePdfReport } from '../services/reports.service.js';
+
 export async function getTopEquipment(req, res, next) {
   try {
     const { month } = req.query;
@@ -19,8 +21,6 @@ export async function getRevenueByPackage(req, res, next) {
     next(err);
   }
 }
-
-import { generatePdfReport } from '../services/reports.service.js';
 
 export async function exportPdf(req, res) {
   try {
@@ -170,5 +170,13 @@ export async function exportWord(req, res, next) {
     res.send(buffer);
   } catch (err) {
     next(err);
+  }
+}
+
+export async function expiringSoon(req, res, next) {
+  try {
+    res.json(await service.membersExpiringSoon(req.query.days || 7));
+  } catch (e) {
+    next(e);
   }
 }

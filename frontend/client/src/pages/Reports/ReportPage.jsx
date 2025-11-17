@@ -179,7 +179,7 @@ const ReportPage = () => {
             <TextField
               type="month"
               size="small"
-              label={t('reports.revenueByPackage.selectMonth') || 'Tháng'}
+              label={t('reports.revenueByPackage.month') || 'Tháng'}
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
             />

@@ -8,7 +8,7 @@ router.get('/equipment/top', controller.getTopEquipment);
 
 // Revenue by package
 router.get('/revenue/packages', controller.getRevenueByPackage);
-
+router.get('/members/expiring', controller.expiringSoon);
 // Export PDF
 router.get('/export/pdf', controller.exportPdf);
 
