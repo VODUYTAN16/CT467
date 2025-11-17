@@ -3,6 +3,8 @@ import PDFDocument from "pdfkit";
 import path from "path";
 import { fileURLToPath } from "url";
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from "docx";
+import { isSubscriptionExpiringSoon } from "./members.service.js";
+import { findAllSubscriptions } from "./subscriptions.service.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +34,22 @@ export async function revenueByPackageMonthly() {
      ORDER BY ym DESC, total_revenue DESC`
   );
   return rows;
+}
+
+export async function membersExpiringSoon(days = 7) {
+  const allSubscriptions = await findAllSubscriptions();
+  const expiringSubscriptions = allSubscriptions.filter(sub =>
+    sub.end_date && isSubscriptionExpiringSoon(sub.end_date, days)
+  );
+
+  return expiringSubscriptions.map(sub => ({
+    member_id: sub.member_id,
+    full_name: sub.member?.full_name || '',
+    phone: sub.member?.phone || '',
+    subscription_id: sub.subscription_id,
+    package_name: sub.package?.name || '',
+    end_date: sub.end_date,
+  }));
 }
 
 export async function generatePdfReport() {
@@ -324,3 +342,4 @@ export async function generateWordReport() {
 
   return Packer.toBuffer(doc);
 }
+

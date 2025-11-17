@@ -36,7 +36,15 @@ export async function createMember(payload) {
   return { member_id: rs.insertId, ...payload };
 }
 
-export async function isExpiringIn7Days(memberId) {
+export async function checkMemberExpiringIn7Days(memberId) {
   const [[row]] = await pool.query("SELECT fn_is_member_expiring_7(:id) AS expiring", { id: memberId });
   return !!row.expiring;
+}
+
+export function isSubscriptionExpiringSoon(endDate, days) {
+  const now = new Date();
+  const expiryDate = new Date(endDate);
+  const diffTime = expiryDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= days && diffDays >= 0;
 }

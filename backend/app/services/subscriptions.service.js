@@ -43,6 +43,7 @@ export async function findAllSubscriptions() {
     `SELECT
       s.*,
       m.full_name AS member_full_name,
+      m.phone AS member_phone,
       p.name AS package_name,
       p.duration_months AS package_duration,
       p.price AS package_price
@@ -56,6 +57,7 @@ export async function findAllSubscriptions() {
     member: row.member_full_name ? {
       member_id: row.member_id,
       full_name: row.member_full_name,
+      phone: row.member_phone,
     } : null,
     package: row.package_name ? {
       package_id: row.package_id,
