@@ -1,10 +1,10 @@
-import * as svc from "../services/members.service.js";
+import * as svc from '../services/members.service.js';
 
 export async function getMemberByPhone(req, res, next) {
   try {
     const { phone } = req.params;
     const member = await svc.getMemberByPhone(phone);
-    if (!member) return res.status(404).json({ message: "Member not found" });
+    if (!member) return res.status(404).json({ message: 'Member not found' });
     res.json(member);
   } catch (e) {
     next(e);
@@ -44,7 +44,7 @@ export async function get(req, res, next) {
   try {
     const id = Number(req.params.id);
     const member = await svc.getMemberById(id);
-    if (!member) return res.status(404).json({ message: "Member not found" });
+    if (!member) return res.status(404).json({ message: 'Member not found' });
     res.json(member);
   } catch (e) {
     next(e);
@@ -65,7 +65,7 @@ export async function remove(req, res, next) {
   try {
     const id = Number(req.params.id);
     const ok = await svc.deleteMember(id);
-    if (!ok) return res.status(404).json({ message: "Member not found" });
+    if (!ok) return res.status(404).json({ message: 'Member not found' });
     res.json({ deleted: true });
   } catch (e) {
     next(e);

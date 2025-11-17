@@ -1,10 +1,18 @@
 import { Router } from 'express';
-import * as c from '../controllers/reports.controller.js';
+import * as controller from '../controllers/reports.controller.js';
 
-const r = Router();
-r.get('/equipment/top', c.topEquipment);
-r.get('/revenue/packages', c.revenueByPackage);
-r.get('/members/expiring', c.expiringSoon);
-r.get('/export/pdf', c.exportPdfReport);
-r.get('/export/word', c.exportWordReport);
-export default r;
+const router = Router();
+
+// Equipment usage (top)
+router.get('/equipment/top', controller.getTopEquipment);
+
+// Revenue by package
+router.get('/revenue/packages', controller.getRevenueByPackage);
+
+// Export PDF
+router.get('/export/pdf', controller.exportPdf);
+
+// Export Word
+router.get('/export/word', controller.exportWord);
+
+export default router;

@@ -1,345 +1,306 @@
-import { pool } from "../config/db.js";
-import PDFDocument from "pdfkit";
-import path from "path";
-import { fileURLToPath } from "url";
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from "docx";
-import { isSubscriptionExpiringSoon } from "./members.service.js";
-import { findAllSubscriptions } from "./subscriptions.service.js";
+import { pool } from '../config/db.js';
+import PDFDocument from 'pdfkit';
+import {
+  Document,
+  Paragraph,
+  Packer,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+} from 'docx';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+// Lấy __dirname cho ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export async function topEquipmentUsage(limit = 10) {
+//
+// Helper: filter by YYYY-MM
+//
+function monthFilter(column, month) {
+  return month ? `WHERE DATE_FORMAT(${column}, '%Y-%m') = :month` : '';
+}
+
+//
+// 1. Top Equipment Usage
+//
+export async function getTopEquipment(month = null) {
+  const params = {};
+  const where = monthFilter('eu.use_date', month);
+
+  if (month) params.month = month;
+
   const [rows] = await pool.query(
-    `SELECT eu.equipment_id, e.name, COUNT(*) AS usage_count
-     FROM equipment_usage eu
-     JOIN equipment e ON e.equipment_id = eu.equipment_id
-     GROUP BY eu.equipment_id, e.name
-     ORDER BY usage_count DESC
-     LIMIT :lim`,
-    { lim: Number(limit) }
+    `
+    SELECT 
+        eu.equipment_id,
+        e.name,
+        COUNT(*) AS usage_count
+    FROM equipment_usage eu
+    JOIN equipment e ON eu.equipment_id = e.equipment_id
+    ${where}
+    GROUP BY eu.equipment_id, e.name
+    ORDER BY usage_count DESC
+    `,
+    params
   );
+
   return rows;
 }
 
-export async function revenueByPackageMonthly() {
+//
+// 2. Revenue by package monthly
+//
+export async function getRevenueByPackage(month = null) {
+  const params = {};
+  const where = monthFilter('pay.paid_at', month);
+
+  if (month) params.month = month;
+
   const [rows] = await pool.query(
-    `SELECT p.name AS package_name,
-            DATE_FORMAT(pay.paid_at, '%Y-%m') AS ym,
-            SUM(pay.amount) AS total_revenue
-     FROM payments pay
-     JOIN subscriptions s ON s.subscription_id = pay.subscription_id
-     JOIN packages p ON p.package_id = s.package_id
-     GROUP BY p.name, ym
-     ORDER BY ym DESC, total_revenue DESC`
+    `
+    SELECT 
+        p.name AS package_name,
+        DATE_FORMAT(pay.paid_at, '%Y-%m') AS ym,
+        SUM(pay.amount) AS total_revenue
+    FROM payments pay
+    JOIN subscriptions s ON s.subscription_id = pay.subscription_id
+    JOIN packages p ON p.package_id = s.package_id
+    ${where}
+    GROUP BY p.name, ym
+    ORDER BY total_revenue DESC
+    `,
+    params
   );
+
   return rows;
 }
 
-export async function membersExpiringSoon(days = 7) {
-  const allSubscriptions = await findAllSubscriptions();
-  const expiringSubscriptions = allSubscriptions.filter(sub =>
-    sub.end_date && isSubscriptionExpiringSoon(sub.end_date, days)
+//
+// 3. Tổng doanh thu tháng
+//
+export async function getTotalRevenue(month = null) {
+  const params = {};
+  const where = monthFilter('paid_at', month);
+
+  if (month) params.month = month;
+
+  const [rows] = await pool.query(
+    `
+      SELECT SUM(amount) AS total
+      FROM payments
+      ${where}
+    `,
+    params
   );
 
-  return expiringSubscriptions.map(sub => ({
-    member_id: sub.member_id,
-    full_name: sub.member?.full_name || '',
-    phone: sub.member?.phone || '',
-    subscription_id: sub.subscription_id,
-    package_name: sub.package?.name || '',
-    end_date: sub.end_date,
-  }));
+  return rows[0].total || 0;
 }
 
-export async function generatePdfReport() {
-  const doc = new PDFDocument({ margin: 50 });
-  const buffers = [];
-  doc.on("data", buffers.push.bind(buffers));
+//
+// DRAW TABLE PDF
+//
+function drawTable(doc, headers, data, keys, widths) {
+  const cellPadding = 6;
+  const rowHeight = 25;
+  let y = doc.y + 10;
+  let x = 50;
 
-  // Load font hỗ trợ tiếng Việt
-  try {
-    const fontPath = path.join(__dirname, "..", "fonts", "Roboto-Regular.ttf");
-    doc.registerFont("Roboto", fontPath);
-    doc.font("Roboto");
-  } catch (error) {
-    console.warn("Không thể tải font Roboto. Sử dụng font mặc định.", error);
-    doc.font("Helvetica");
-  }
+  // Header row
+  doc.fontSize(12).font('Roboto-Regular');
+  headers.forEach((h, i) => {
+    doc.rect(x, y, widths[i], rowHeight).stroke();
+    doc.text(h, x + cellPadding, y + 7, { width: widths[i] - 10 });
+    x += widths[i];
+  });
 
-  doc.fontSize(20).text("Báo cáo Quản lý Phòng Gym", { align: "center" });
-  doc.moveDown();
+  y += rowHeight;
 
-  // Helper: Vẽ bảng có phân trang
-  const drawTable = (doc, headers, data, dataKeys, columnWidths, cellPadding = 5, appendSummary = null) => {
-    const tableX = 50;
-    const rowHeight = 25;
-    const pageHeight = doc.page.height;
-    const bottomMargin = 50;
-    let currentY = doc.y;
+  // Data rows
+  data.forEach((row) => {
+    x = 50;
 
-    const drawHeader = () => {
-      let currentX = tableX;
-      doc.fontSize(10).font("Roboto");
-      headers.forEach((header, i) => {
-        doc.rect(currentX, currentY, columnWidths[i], rowHeight).stroke();
-        doc.text(header, currentX + cellPadding, currentY + cellPadding, {
-          width: columnWidths[i] - 2 * cellPadding,
-          align: "left",
-        });
-        currentX += columnWidths[i];
-      });
-      currentY += rowHeight;
-    };
+    // Auto new page
+    if (y + rowHeight > doc.page.height - 50) {
+      doc.addPage();
+      y = 50;
+    }
 
-    drawHeader();
+    keys.forEach((key, i) => {
+      let text = row[key];
 
-    const allRows = [...data];
-    if (appendSummary) allRows.push(appendSummary);
-
-    allRows.forEach((row) => {
-      if (currentY + rowHeight > pageHeight - bottomMargin) {
-        doc.addPage();
-        currentY = 50;
-        drawHeader();
+      // Format number
+      if (key === 'total_revenue') {
+        text = new Intl.NumberFormat('vi-VN').format(text);
       }
 
-      let currentX = tableX;
-      dataKeys.forEach((key, i) => {
-        doc.rect(currentX, currentY, columnWidths[i], rowHeight).stroke();
-        const rawValue = row[key];
-        const text = rawValue != null ? (key === "total_revenue" ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(rawValue) : String(rawValue)) : "";
-        doc.text(text, currentX + cellPadding, currentY + cellPadding, {
-          width: columnWidths[i] - 2 * cellPadding,
-          align: "left",
-        });
-        currentX += columnWidths[i];
+      doc.rect(x, y, widths[i], rowHeight).stroke();
+      doc.text(String(text ?? ''), x + cellPadding, y + 7, {
+        width: widths[i] - 10,
       });
-      currentY += rowHeight;
+      x += widths[i];
     });
 
-    doc.moveDown();
-  };
+    y += rowHeight;
+  });
 
-  // Thiết bị sử dụng nhiều nhất
-  const topEquipment = await topEquipmentUsage();
-  doc.moveDown(1);
-  doc.fontSize(16).text("Thiết bị được sử dụng nhiều nhất:", { align: "left" });
-  doc.moveDown(0.2);
-  const lineY1 = doc.y;
-  doc
-    .moveTo(doc.page.margins.left, lineY1)
-    .lineTo(doc.page.width - doc.page.margins.right, lineY1)
-    .stroke();
-  doc.moveDown(0.5);
+  doc.moveDown();
+}
 
-  const topEquipmentHeaders = ["Tên thiết bị", "Số lượt sử dụng"];
-  const topEquipmentDataKeys = ["name", "usage_count"];
-  const topEquipmentColumnWidths = [300, 100];
-  const topEquipmentData = topEquipment.map((item) => ({
-    name: item.name,
-    usage_count: item.usage_count,
-  }));
-  drawTable(doc, topEquipmentHeaders, topEquipmentData, topEquipmentDataKeys, topEquipmentColumnWidths);
+//
+// 4. Generate PDF
+//
+export async function generatePdfReport(month = null) {
+  const doc = new PDFDocument({ margin: 50 });
+  const buffers = [];
+  doc.on('data', buffers.push.bind(buffers));
 
-  // Doanh thu theo gói
+  // Load Unicode font
+  try {
+    const fontPath = path.join(__dirname, '..', 'fonts', 'Roboto-Regular.ttf');
+    doc.registerFont('Roboto-Regular', fontPath);
+    doc.font('Roboto-Regular');
+  } catch (err) {
+    console.error('Font load error:', err);
+    doc.font('Helvetica');
+  }
 
-  const revenueByPackage = await revenueByPackageMonthly();
+  // HEADER
+  doc.fontSize(22).text('Báo cáo Quản lý Phòng Gym', { align: 'center' });
+  if (month) doc.text(`Tháng: ${month}`, { align: 'center' });
+  doc.moveDown(2);
+
+  // ======================
+  // 1. THIẾT BỊ DÙNG NHIỀU
+  // ======================
+  const topEquipment = await getTopEquipment(month);
+
+  doc.fontSize(16).text('1. Thiết bị được sử dụng nhiều nhất');
+  drawTable(
+    doc,
+    ['Thiết bị', 'Số lượt'],
+    topEquipment,
+    ['name', 'usage_count'],
+    [300, 100]
+  );
+
+  // ======================
+  // 2. DOANH THU THEO GÓI
+  // ======================
+  const revenue = await getRevenueByPackage(month);
+
   doc.addPage();
-  doc.fontSize(16).text("Doanh thu theo Gói (Hàng tháng):", { align: "left" });
-  doc.moveDown(0.2);
-  const lineY2 = doc.y;
-  doc
-    .moveTo(doc.page.margins.left, lineY2)
-    .lineTo(doc.page.width - doc.page.margins.right, lineY2)
-    .stroke();
-  doc.moveDown(0.5);
+  doc.fontSize(16).text('2. Doanh thu theo gói');
+  drawTable(
+    doc,
+    ['Gói', 'Tháng', 'Doanh thu'],
+    revenue,
+    ['package_name', 'ym', 'total_revenue'],
+    [200, 100, 150]
+  );
 
-  const revenueByPackageHeaders = ["Gói", "Tháng", "Doanh thu"];
-  const revenueByPackageDataKeys = ["package_name", "ym", "total_revenue"];
-  const revenueByPackageColumnWidths = [200, 100, 150];
-  const revenueByPackageData = revenueByPackage.map((item) => ({
-    package_name: item.package_name,
-    ym: item.ym,
-    total_revenue: item.total_revenue,
-  }));
+  // ======================
+  // 3. TỔNG DOANH THU THÁNG
+  // ======================
+  const total = await getTotalRevenue(month);
 
-  const totalRevenue = revenueByPackage.reduce((sum, item) => sum + Number(item.total_revenue || 0), 0);
-  const summaryRow = {
-    package_name: "Tổng doanh thu",
-    ym: "",
-    total_revenue: totalRevenue,
-  };
-
-  drawTable(doc, revenueByPackageHeaders, revenueByPackageData, revenueByPackageDataKeys, revenueByPackageColumnWidths, 5, summaryRow);
+  doc.moveDown(2);
+  doc.fontSize(18).text('3. Tổng doanh thu tháng:', { underline: true });
+  doc.fontSize(20).text(
+    new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(total),
+    { align: 'center' }
+  );
 
   doc.end();
 
   return new Promise((resolve) => {
-    doc.on("end", () => {
-      const pdfBuffer = Buffer.concat(buffers);
-      resolve(pdfBuffer);
-    });
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
   });
 }
 
-export async function generateWordReport() {
-  const topEquipment = await topEquipmentUsage();
-  const revenueByPackage = await revenueByPackageMonthly();
+//
+// 5. Export Word
+//
+export async function exportWord(month = null) {
+  const [topEquipment, revenue, total] = await Promise.all([
+    getTopEquipment(month),
+    getRevenueByPackage(month),
+    getTotalRevenue(month),
+  ]);
 
-  const children = [];
-
-  // Tiêu đề chính
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "Báo cáo Quản lý Phòng Gym", bold: true, size: 40 })],
-      alignment: "center",
-    })
-  );
-  children.push(new Paragraph({ text: "" }));
-
-  // Tiêu đề phần thiết bị
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "Thiết bị được sử dụng nhiều nhất:", bold: true, size: 32 })],
-    })
-  );
-  children.push(new Paragraph({ text: "" }));
-
-  // Bảng thiết bị
-  const equipmentTableRows = [];
-
-  // Header
-  equipmentTableRows.push(
-    new TableRow({
-      children: [
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: "Tên thiết bị", bold: true })] })],
-          width: { size: 70, type: WidthType.PERCENTAGE },
+  // WORD TABLE helper
+  function makeTable(headers, rows, keys) {
+    return new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: headers.map(
+            (h) =>
+              new TableCell({
+                children: [new Paragraph(h)],
+              })
+          ),
         }),
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: "Số lượt sử dụng", bold: true })] })],
-          width: { size: 30, type: WidthType.PERCENTAGE },
-        }),
-      ],
-    })
-  );
-
-  // Dữ liệu thiết bị
-  topEquipment.forEach((item) => {
-    equipmentTableRows.push(
-      new TableRow({
-        children: [new TableCell({ children: [new Paragraph(item.name)] }), new TableCell({ children: [new Paragraph(String(item.usage_count))] })],
-      })
-    );
-  });
-
-  const equipmentTable = new Table({
-    rows: equipmentTableRows,
-    width: { size: 100, type: WidthType.PERCENTAGE },
-  });
-
-  children.push(equipmentTable);
-
-  // Xuống trang mới cho phần doanh thu
-  children.push(new Paragraph({ text: "", pageBreakBefore: true }));
-
-  // Tiêu đề doanh thu
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: "Doanh thu theo Gói (Hàng tháng):", bold: true, size: 32 })],
-    })
-  );
-  children.push(new Paragraph({ text: "" }));
-
-  // Bảng doanh thu
-  const revenueTableRows = [];
-
-  // Header
-  revenueTableRows.push(
-    new TableRow({
-      children: [
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: "Gói", bold: true })] })],
-          width: { size: 40, type: WidthType.PERCENTAGE },
-        }),
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: "Tháng", bold: true })] })],
-          width: { size: 30, type: WidthType.PERCENTAGE },
-        }),
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: "Doanh thu", bold: true })] })],
-          width: { size: 30, type: WidthType.PERCENTAGE },
-        }),
-      ],
-    })
-  );
-
-  // Dữ liệu doanh thu
-  revenueByPackage.forEach((item) => {
-    revenueTableRows.push(
-      new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph(item.package_name)] }),
-          new TableCell({ children: [new Paragraph(item.ym)] }),
-          new TableCell({
-            children: [
-              new Paragraph(
-                new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(item.total_revenue)
+        ...rows.map(
+          (r) =>
+            new TableRow({
+              children: keys.map(
+                (k) =>
+                  new TableCell({
+                    children: [new Paragraph(String(r[k] ?? ''))],
+                  })
               ),
-            ],
-          }),
-        ],
-      })
-    );
-  });
-
-  // Tổng doanh thu
-  const totalRevenue = revenueByPackage.reduce((sum, item) => sum + Number(item.total_revenue || 0), 0);
-  revenueTableRows.push(
-    new TableRow({
-      children: [
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: "Tổng doanh thu", bold: true })] })],
-        }),
-        new TableCell({ children: [new Paragraph("")] }),
-        new TableCell({
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: new Intl.NumberFormat("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  }).format(totalRevenue),
-                  bold: true,
-                }),
-              ],
-            }),
-          ],
-        }),
+            })
+        ),
       ],
-    })
-  );
-
-  const revenueTable = new Table({
-    rows: revenueTableRows,
-    width: { size: 100, type: WidthType.PERCENTAGE },
-  });
-
-  children.push(revenueTable);
+    });
+  }
 
   const doc = new Document({
     sections: [
       {
-        children: children,
+        children: [
+          new Paragraph({
+            text: 'BÁO CÁO QUẢN LÝ PHÒNG GYM',
+            heading: 'Heading1',
+          }),
+          month ? new Paragraph(`Tháng: ${month}`) : new Paragraph(''),
+
+          new Paragraph(''),
+
+          new Paragraph('1. Thiết bị sử dụng nhiều nhất'),
+          makeTable(['Tên thiết bị', 'Số lượt'], topEquipment, [
+            'name',
+            'usage_count',
+          ]),
+
+          new Paragraph(''),
+
+          new Paragraph('2. Doanh thu theo gói'),
+          makeTable(['Gói', 'Tháng', 'Doanh thu'], revenue, [
+            'package_name',
+            'ym',
+            'total_revenue',
+          ]),
+
+          new Paragraph(''),
+
+          new Paragraph('Tổng doanh thu tháng'),
+          new Paragraph(
+            new Intl.NumberFormat('vi-VN', {
+              style: 'currency',
+              currency: 'VND',
+            }).format(total)
+          ),
+        ],
       },
     ],
   });
 
   return Packer.toBuffer(doc);
 }
-
