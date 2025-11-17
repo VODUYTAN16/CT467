@@ -52,6 +52,10 @@
     "error_exporting_pdf": "Lỗi khi xuất báo cáo PDF.",
     "error_exporting_word": "Lỗi khi xuất báo cáo Word."
   },
+  "members": {
+    "full_name": "Họ và tên",
+    "phone": "Số điện thoại"
+  },
   "form": {
     "add_payment": "Thêm thanh toán",
     "edit_payment": "Chỉnh sửa thanh toán",
@@ -88,7 +92,8 @@
     "required": "Trường này là bắt buộc",
     "invalid_email": "Địa chỉ email không hợp lệ",
     "min_length": "Tối thiểu {{count}} ký tự",
-    "max_length": "Tối đa {{count}} ký tự"
+    "max_length": "Tối đa {{count}} ký tự",
+    "search_expiring_members": "Tìm kiếm thành viên sắp hết hạn"
   },
   "usage": {
     "add_new": "Thêm bản ghi sử dụng mới",
@@ -279,6 +284,7 @@
     "duration": "Thời lượng",
     "expiring_subscriptions": "Đăng ký sắp hết hạn",
     "days_left": "Số ngày còn lại",
-    "days": "ngày"
+    "days": "ngày",
+    "expiring_members_title": "Thành viên sắp hết hạn"
   }
 }
