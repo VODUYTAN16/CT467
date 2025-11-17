@@ -16,6 +16,7 @@ const SubscriptionList = () => {
   const [expiringMembers, setExpiringMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [expiringSearchQuery, setExpiringSearchQuery] = useState("");
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
@@ -78,6 +79,12 @@ const SubscriptionList = () => {
     const endDate = getEndDate(sub.start_date, sub.package?.duration || 0)?.toLocaleDateString() || "";
 
     return [memberName, packageName, startDate, endDate].join(" ").toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const filteredExpiringMembers = expiringMembers.filter((member) => {
+    if (!member) return false;
+    const memberInfo = `${member.full_name} ${member.phone} ${member.package_name} ${new Date(member.end_date).toLocaleDateString()}`;
+    return memberInfo.toLowerCase().includes(expiringSearchQuery.toLowerCase());
   });
 
   const columns = [
@@ -208,18 +215,77 @@ const SubscriptionList = () => {
           }}
         >
           <Typography variant="h6" component="h2" fontWeight="500" mb={2}>
-            {t("subscriptions.expiring_subscriptions") || "Members Expiring in 7 Days"}
+            {t("subscriptions.expiring_members_title")}
           </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-            {expiringMembers.map((member) => (
-              <Chip
-                key={member.member_id}
-                label={`${member.full_name} - ${member.phone} - ${member.package_name} (Expires: ${new Date(member.end_date).toLocaleDateString()})`}
-                color="warning"
-                variant="outlined"
-              />
-            ))}
-          </Box>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder={t("form.search_expiring_members")}
+            value={expiringSearchQuery}
+            onChange={(e) => setExpiringSearchQuery(e.target.value)}
+            sx={{
+              mb: 2,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.common.black, 0.02),
+                "&:hover": {
+                  bgcolor: alpha(theme.palette.common.black, 0.03),
+                },
+                "& fieldset": {
+                  borderColor: alpha(theme.palette.divider, 0.3),
+                },
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <DataGrid
+            rows={filteredExpiringMembers.map((member) => ({ id: member.member_id, ...member }))}
+            columns={[
+              { field: "id", headerName: t("form.id") || "ID", width: 90 },
+              { field: "full_name", headerName: t("members.full_name"), flex: 1.5, minWidth: 150 },
+              { field: "phone", headerName: t("members.phone"), flex: 1, minWidth: 100 },
+              { field: "package_name", headerName: t("subscriptions.package") || "Package", flex: 1, minWidth: 100 },
+              {
+                field: "end_date",
+                headerName: t("subscriptions.end_date") || "End Date",
+                width: 150,
+                renderCell: (params) => {
+                  const v = params.value;
+                  if (!v) return "";
+                  const d = new Date(v);
+                  return !isNaN(d) ? d.toLocaleDateString() : "";
+                },
+              },
+            ]}
+            pageSizeOptions={[5, 10, 25]}
+            disableRowSelectionOnClick
+            autoHeight
+            sx={{
+              border: "none",
+              "& .MuiDataGrid-cell": {
+                borderColor: alpha(theme.palette.divider, 0.3),
+              },
+              "& .MuiDataGrid-columnHeaders": {
+                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                borderRadius: 1,
+              },
+              [`& .${gridClasses.row}:hover`]: {
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+              },
+              "& .MuiDataGrid-virtualScroller": {
+                bgcolor: "transparent",
+              },
+            }}
+          />
         </Paper>
       )}
 

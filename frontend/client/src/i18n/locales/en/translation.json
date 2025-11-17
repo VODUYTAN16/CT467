@@ -52,6 +52,10 @@
     "error_exporting_pdf": "Error exporting PDF report.",
     "error_exporting_word": "Error exporting Word report."
   },
+  "members": {
+    "full_name": "Full Name",
+    "phone": "Phone"
+  },
   "reports": {
     "title": "Reports",
     "exportPdf": "Export to PDF",
@@ -127,7 +131,8 @@
     "required": "This field is required",
     "invalid_email": "Invalid email address",
     "min_length": "Minimum length is {{count}} characters",
-    "max_length": "Maximum length is {{count}} characters"
+    "max_length": "Maximum length is {{count}} characters",
+    "search_expiring_members": "Search expiring members"
   },
   "usage": {
     "add_new": "Add New Usage",
@@ -284,6 +289,17 @@
     "duration": "Duration",
     "expiring_subscriptions": "Expiring Subscriptions",
     "days_left": "Days Left",
-    "days": "days"
+    "days": "days",
+    "expiring_members_title": "Members Expiring Soon"
+  },
+  "sidebar": {
+    "members": "Members",
+    "equipment": "Equipment",
+    "packages": "Packages",
+    "subscriptions": "Subscriptions",
+    "payments": "Payments",
+    "usages": "Usages",
+    "reports": "Reports",
+    "user_management": "User Management"
   }
 }

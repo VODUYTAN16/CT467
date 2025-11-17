@@ -36,20 +36,6 @@ const MemberList = () => {
     fetchMembers();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm(t("message.confirm_delete_member") || "Are you sure you want to delete this member?")) {
-      try {
-        await api.delete(`/members/${id}`);
-        setSnack({ open: true, severity: "success", message: t("message.deleted") || "Deleted successfully" });
-        fetchMembers();
-      } catch (error) {
-        console.error("Error deleting member:", error);
-        setSnack({ open: true, severity: "error", message: t("message.error") || "An error occurred" });
-      }
-    }
-  };
-
-  // filter using backend fields (full_name, phone, gender, joined_at)
   const filteredMembers = members.filter((member) => [member.full_name, member.phone, member.gender, member.joined_at].join(" ").toLowerCase().includes(searchQuery.toLowerCase()));
 
   const columns = [
@@ -110,11 +96,6 @@ const MemberList = () => {
           <Tooltip title={t("button.edit") || "Edit"}>
             <IconButton onClick={() => navigate(`/members/edit/${params.row.id}`)} size="small" sx={{ color: theme.palette.primary.main }}>
               <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t("button.delete") || "Delete"}>
-            <IconButton onClick={() => handleDelete(params.row.id)} size="small" sx={{ color: theme.palette.error.main }}>
-              <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Box>
